@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portfolio — Étudiant GEA</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #F5F0E8; --ink: #1A1814; --gold: #C9A84C;
+    --gold-light: #E8D49A; --warm-gray: #8A8070; --edit-blue: #3B7DD8;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--cream); color: var(--ink); font-family: 'DM Sans', sans-serif; font-weight: 300; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; opacity: 0.6; }
+
+  /* ── PAGES (multi-vue) ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── NAV ── */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 2.5rem; background: rgba(245,240,232,0.92); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(201,168,76,0.18); flex-wrap: wrap; gap: 0.5rem; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; color: var(--ink); text-decoration: none; cursor: pointer; }
+  .nav-links { display: flex; gap: 1.6rem; list-style: none; flex-wrap: wrap; }
+  .nav-links a { text-decoration: none; color: var(--warm-gray); font-size: 0.71rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; transition: color 0.25s; padding-bottom: 3px; border-bottom: 1px solid transparent; cursor: pointer; }
+  .nav-links a:hover, .nav-links a.active { color: var(--ink); border-bottom-color: var(--gold); }
+  .nav-dropdown { position: relative; }
+  .nav-dropdown > a::after { content: ' ▾'; font-size: 0.6rem; }
+  .nav-sub { display: none; position: absolute; top: 100%; left: 0; background: var(--cream); border: 1px solid rgba(201,168,76,0.25); min-width: 220px; padding: 0.5rem 0; box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 200; }
+  .nav-dropdown:hover .nav-sub { display: block; }
+  .nav-sub a { display: block; padding: 0.5rem 1rem; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--warm-gray); border-bottom: none; white-space: nowrap; }
+  .nav-sub a:hover { color: var(--gold); background: rgba(201,168,76,0.05); }
+
+  /* ── EDIT TOOLBAR ── */
+  #edit-toolbar { position: fixed; bottom: 2rem; right: 2rem; z-index: 9000; display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem; }
+  #edit-toggle { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1.4rem; background: var(--ink); color: var(--cream); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; transition: background 0.25s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  #edit-toggle:hover { background: var(--gold); color: var(--ink); }
+  #edit-toggle.active { background: var(--edit-blue); color: white; }
+  #edit-hint { display: none; background: rgba(26,24,20,0.92); color: rgba(245,240,232,0.72); font-size: 0.7rem; padding: 0.6rem 1rem; max-width: 240px; text-align: right; line-height: 1.6; }
+  #edit-hint.visible { display: block; }
+  .edit-banner { display: none; position: fixed; top: 4.5rem; left: 50%; transform: translateX(-50%); background: var(--edit-blue); color: white; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.4rem 1.2rem; z-index: 8000; white-space: nowrap; }
+  body.edit-mode .edit-banner { display: block; }
+  body.edit-mode [contenteditable] { outline: 2px dashed rgba(59,125,216,0.45); outline-offset: 3px; cursor: text; transition: outline 0.2s, background 0.2s; }
+  body.edit-mode [contenteditable]:hover { outline-color: var(--edit-blue); background: rgba(59,125,216,0.05); }
+  body.edit-mode [contenteditable]:focus { outline: 2px solid var(--edit-blue); }
+  .add-project-btn { display: none; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border: 1px dashed rgba(201,168,76,0.4); background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,240,232,0.45); margin-top: 1.8rem; transition: border-color 0.2s, color 0.2s; }
+  .add-project-btn:hover { border-color: var(--gold); color: var(--gold); }
+  body.edit-mode .add-project-btn { display: inline-flex; }
+  .delete-card-btn { display: none; position: absolute; top: 0.8rem; right: 0.8rem; width: 22px; height: 22px; background: rgba(200,60,60,0.75); color: white; border: none; cursor: pointer; font-size: 0.7rem; align-items: center; justify-content: center; }
+  .delete-card-btn:hover { background: rgb(200,60,60); }
+  body.edit-mode .delete-card-btn { display: flex; }
+
+  /* ── SECTIONS COMMUN ── */
+  section { padding: 6rem 3rem; }
+  .section-eyebrow { display: inline-flex; align-items: center; gap: 0.8rem; font-size: 0.66rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
+  .section-eyebrow::before { content: ''; width: 26px; height: 1px; background: var(--gold); }
+  .section-title { font-family: 'Playfair Display', serif; font-size: clamp(1.85rem, 3.2vw, 3rem); font-weight: 700; line-height: 1.1; margin-bottom: 1rem; }
+
+  /* ── HERO ── */
+  .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 8rem 3rem 4rem; position: relative; }
+  .hero::after { content: ''; position: absolute; right: 0; top: 10%; width: 50%; height: 80%; background: radial-gradient(ellipse at 70% 40%, rgba(201,168,76,0.1) 0%, transparent 65%); pointer-events: none; }
+  .hero-eyebrow { display: inline-flex; align-items: center; gap: 0.8rem; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.8rem; opacity: 0; animation: fadeUp 0.7s 0.2s forwards; }
+  .hero-eyebrow::before { content: ''; width: 26px; height: 1px; background: var(--gold); }
+  .hero-name { font-family: 'Playfair Display', serif; font-size: clamp(3rem, 5.5vw, 5.5rem); font-weight: 900; line-height: 0.96; letter-spacing: -0.02em; margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.8s 0.35s forwards; }
+  .hero-name em { font-style: italic; color: var(--gold); }
+  .hero-desc { font-size: 0.98rem; line-height: 1.8; color: var(--warm-gray); max-width: 420px; margin-bottom: 2.8rem; opacity: 0; animation: fadeUp 0.8s 0.5s forwards; }
+  .hero-cta { display: inline-flex; align-items: center; gap: 0.7rem; padding: 0.85rem 1.8rem; background: var(--ink); color: var(--cream); text-decoration: none; font-size: 0.73rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; transition: background 0.3s, gap 0.3s; opacity: 0; animation: fadeUp 0.8s 0.65s forwards; cursor: pointer; }
+  .hero-cta:hover { background: var(--gold); color: var(--ink); gap: 1.1rem; }
+  .hero-visual { position: relative; display: flex; justify-content: center; align-items: center; opacity: 0; animation: fadeIn 1.1s 0.6s forwards; }
+  .avatar-frame { width: 310px; height: 390px; position: relative; }
+  .avatar-bg { width: 100%; height: 100%; background: linear-gradient(145deg, var(--gold-light) 0%, rgba(201,168,76,0.22) 100%); }
+  .avatar-initials { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.5rem; }
+  .initials-big { font-family: 'Playfair Display', serif; font-size: 6rem; font-weight: 900; color: rgba(26,24,20,0.1); line-height: 1; letter-spacing: -0.05em; }
+  .initials-sub { font-size: 0.62rem; font-weight: 500; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(26,24,20,0.32); }
+  .frame-deco { position: absolute; top: -0.8rem; left: -0.8rem; width: 100%; height: 100%; border: 2px solid var(--gold); opacity: 0.28; pointer-events: none; }
+  .avatar-badge { position: absolute; bottom: -1rem; right: -1rem; width: 95px; height: 95px; background: var(--ink); border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .badge-year { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900; color: var(--gold); line-height: 1; }
+  .badge-sub { font-size: 0.5rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,240,232,0.5); text-align: center; line-height: 1.4; margin-top: 0.12rem; }
+
+  /* ── QUI JE SUIS ── */
+  #qui-je-suis { background: var(--ink); color: var(--cream); display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
+  #qui-je-suis .section-title { color: var(--cream); }
+  .profile-text { font-size: 0.93rem; line-height: 1.85; color: rgba(245,240,232,0.62); margin-bottom: 2rem; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(201,168,76,0.14); margin-top: 2.5rem; }
+  .stat-box { background: #1A1814; padding: 1.3rem; text-align: center; }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 900; color: var(--gold); display: block; line-height: 1; margin-bottom: 0.3rem; }
+  .stat-lbl { font-size: 0.6rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245,240,232,0.35); }
+  .profile-quote { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-style: italic; line-height: 1.55; color: rgba(245,240,232,0.85); border-left: 3px solid var(--gold); padding-left: 1.4rem; margin-bottom: 2.5rem; }
+  .profile-details { display: flex; flex-direction: column; }
+  .detail-row { display: grid; grid-template-columns: 120px 1fr; gap: 1rem; align-items: baseline; padding: 0.85rem 0; border-bottom: 1px solid rgba(201,168,76,0.1); }
+  .detail-key { font-size: 0.64rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+  .detail-val { font-size: 0.88rem; line-height: 1.6; color: rgba(245,240,232,0.62); }
+
+  /* ── COMPETENCES ── */
+  #competences { background: var(--cream); }
+  .comp-intro { max-width: 500px; font-size: 0.93rem; line-height: 1.8; color: var(--warm-gray); margin-bottom: 3rem; }
+  .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px; background: rgba(26,24,20,0.1); }
+  .comp-card { background: var(--cream); padding: 2rem 1.8rem; position: relative; transition: background 0.3s; }
+  .comp-card:hover { background: #EAE4D8; }
+  .comp-num { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 900; color: rgba(201,168,76,0.13); line-height: 1; margin-bottom: 0.9rem; }
+  .comp-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.6rem; }
+  .comp-desc { font-size: 0.82rem; line-height: 1.75; color: var(--warm-gray); }
+  .comp-line { position: absolute; bottom: 0; left: 1.8rem; right: 1.8rem; height: 2px; background: var(--gold); transform: scaleX(0); transform-origin: left; transition: transform 0.35s ease; }
+  .comp-card:hover .comp-line { transform: scaleX(1); }
+  .comp-card-link { cursor: pointer; }
+
+  /* ── REALISATIONS ── */
+  #realisations { background: #1E1B16; color: var(--cream); }
+  #realisations .section-title { color: var(--cream); }
+  .real-intro { max-width: 500px; font-size: 0.93rem; line-height: 1.8; color: rgba(245,240,232,0.5); margin-bottom: 3rem; }
+  .real-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+  .real-card { border: 1px solid rgba(201,168,76,0.14); padding: 2rem; position: relative; transition: border-color 0.3s; }
+  .real-card:hover { border-color: rgba(201,168,76,0.4); }
+  .real-tag { display: inline-block; padding: 0.22rem 0.65rem; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.22); font-size: 0.6rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.1rem; }
+  .real-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--cream); margin-bottom: 0.75rem; line-height: 1.3; }
+  .real-desc { font-size: 0.84rem; line-height: 1.75; color: rgba(245,240,232,0.52); }
+  .real-period { display: block; margin-top: 1.2rem; font-size: 0.64rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245,240,232,0.28); }
+
+  /* ── OBJECTIFS ── */
+  #objectifs { background: var(--cream); text-align: center; }
+  .traj-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 3.5rem; position: relative; }
+  .traj-grid::before { content: ''; position: absolute; top: 1.4rem; left: calc(100%/6); right: calc(100%/6); height: 1px; background: rgba(201,168,76,0.28); }
+  .traj-step { padding: 0 2rem 2rem; }
+  .traj-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--gold); margin: 0 auto 2rem; position: relative; z-index: 1; }
+  .traj-dot::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 1px solid rgba(201,168,76,0.32); }
+  .traj-year { display: block; font-size: 0.62rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.7rem; }
+  .traj-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.7rem; }
+  .traj-desc { font-size: 0.82rem; line-height: 1.75; color: var(--warm-gray); }
+
+  /* ── CONTACT ── */
+  #contact { background: var(--ink); color: var(--cream); display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; }
+  #contact .section-title { color: var(--cream); }
+  .contact-intro { font-size: 0.9rem; line-height: 1.8; color: rgba(245,240,232,0.52); margin-top: 0.8rem; margin-bottom: 2rem; }
+  .contact-row { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 1rem; padding: 0.85rem 0; border-bottom: 1px solid rgba(201,168,76,0.1); }
+  .contact-key { font-size: 0.62rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+  .contact-val { font-size: 0.87rem; color: rgba(245,240,232,0.62); }
+  .contact-form { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem; }
+  .form-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .form-field label { font-size: 0.62rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,240,232,0.38); }
+  .form-field input, .form-field textarea { padding: 0.82rem 1rem; border: 1px solid rgba(201,168,76,0.16); background: rgba(255,255,255,0.025); font-family: 'DM Sans', sans-serif; font-size: 0.87rem; color: var(--cream); outline: none; transition: border-color 0.3s; resize: vertical; }
+  .form-field input::placeholder, .form-field textarea::placeholder { color: rgba(245,240,232,0.22); }
+  .form-field input:focus, .form-field textarea:focus { border-color: var(--gold); }
+  .form-submit { display: inline-flex; align-items: center; gap: 0.7rem; padding: 0.82rem 1.8rem; background: var(--gold); color: var(--ink); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.73rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; transition: opacity 0.25s; align-self: flex-start; }
+  .form-submit:hover { opacity: 0.82; }
+
+  /* ── COMPÉTENCE PAGES (5 pages GEA) ── */
+  .cp-hero { min-height: 45vh; background: var(--ink); color: var(--cream); display: flex; flex-direction: column; justify-content: flex-end; padding: 8rem 3rem 3.5rem; position: relative; overflow: hidden; }
+  .cp-hero::before { content: attr(data-num); position: absolute; right: 3rem; bottom: -1rem; font-family: 'Playfair Display', serif; font-size: 14rem; font-weight: 900; color: rgba(201,168,76,0.06); line-height: 1; pointer-events: none; }
+  .cp-back { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(245,240,232,0.4); margin-bottom: 1.8rem; cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; transition: color 0.2s; padding: 0; }
+  .cp-back:hover { color: var(--gold); }
+  .cp-eyebrow { font-size: 0.66rem; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.7rem; }
+  .cp-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--gold); }
+  .cp-title { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 4.5rem); font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
+  .cp-title em { font-style: italic; color: var(--gold); }
+
+  .cp-body { background: var(--cream); padding: 5rem 3rem; }
+  .cp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+  .cp-intro { font-size: 1rem; line-height: 1.85; color: var(--warm-gray); margin-bottom: 2.5rem; }
+
+  .cp-block { margin-bottom: 2.5rem; }
+  .cp-block-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.7rem; }
+  .cp-block-title::before { content: ''; width: 20px; height: 2px; background: var(--gold); flex-shrink: 0; }
+  .cp-block-text { font-size: 0.88rem; line-height: 1.82; color: var(--warm-gray); }
+
+  .cp-todo { background: var(--ink); padding: 2rem; margin-top: 3rem; }
+  .cp-todo-label { font-size: 0.62rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.8rem; display: block; }
+  .cp-todo-text { font-size: 0.88rem; line-height: 1.75; color: rgba(245,240,232,0.5); font-style: italic; }
+
+  .cp-skills-list { display: flex; flex-direction: column; gap: 1px; background: rgba(26,24,20,0.1); margin-top: 2rem; }
+  .cp-skill-item { background: var(--cream); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .cp-skill-name { font-size: 0.85rem; font-weight: 500; }
+  .cp-skill-bar-wrap { flex: 1; max-width: 160px; height: 3px; background: rgba(26,24,20,0.1); }
+  .cp-skill-bar { height: 100%; background: var(--gold); transition: width 1s ease; }
+
+  .cp-projects { margin-top: 3rem; }
+  .cp-project-card { border: 1px solid rgba(26,24,20,0.12); padding: 1.5rem; margin-bottom: 1rem; transition: border-color 0.3s; }
+  .cp-project-card:hover { border-color: var(--gold); }
+  .cp-project-tag { font-size: 0.6rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; display: block; }
+  .cp-project-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .cp-project-desc { font-size: 0.82rem; line-height: 1.72; color: var(--warm-gray); }
+
+  /* ── FOOTER ── */
+  footer { background: #0E0C09; color: rgba(245,240,232,0.28); text-align: center; padding: 1.7rem 3rem; font-size: 0.7rem; letter-spacing: 0.1em; }
+  footer span { color: var(--gold); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.75s ease, transform 0.75s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.2rem; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.62rem; }
+    .hero, .cp-grid { grid-template-columns: 1fr; }
+    .hero { padding: 6rem 1.5rem 3rem; }
+    .hero-visual { display: none; }
+    #qui-je-suis, #contact { grid-template-columns: 1fr; padding: 4rem 1.5rem; gap: 3rem; }
+    section { padding: 4rem 1.5rem; }
+    .comp-grid { grid-template-columns: 1fr; }
+    .real-grid { grid-template-columns: 1fr; }
+    .traj-grid { grid-template-columns: 1fr; }
+    .traj-grid::before { display: none; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    #edit-toolbar { bottom: 1rem; right: 1rem; }
+    .cp-body { padding: 3rem 1.5rem; }
+    .cp-hero { padding: 6rem 1.5rem 2.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="edit-banner">Mode édition actif — Les modifications sont sauvegardées automatiquement</div>
+
+<div id="edit-toolbar">
+  <div id="edit-hint">Cliquez sur les textes pour les modifier. Chaque modification est sauvegardée automatiquement dans votre navigateur.</div>
+  <button id="edit-toggle" onclick="toggleEdit()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Modifier le site
+  </button>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo" onclick="showPage('main')">Portfolio GEA</span>
+  <ul class="nav-links">
+    <li><a onclick="showPage('main'); scrollTo('qui-je-suis')">Qui je suis</a></li>
+    <li class="nav-dropdown">
+      <a onclick="showPage('main'); scrollTo('competences')">Compétences</a>
+      <div class="nav-sub">
+        <a onclick="showPage('cp1')">SAÉ — Situation d'Apprentissage</a>
+        <a onclick="showPage('cp2')">Analyse Financière & Gestion</a>
+        <a onclick="showPage('cp3')">Management des Organisations</a>
+        <a onclick="showPage('cp4')">Gestion des Ressources Humaines</a>
+        <a onclick="showPage('cp5')">Communication & Numérique</a>
+      </div>
+    </li>
+    <li><a onclick="showPage('main'); scrollTo('realisations')">Réalisations</a></li>
+    <li><a onclick="showPage('main'); scrollTo('objectifs')">Objectifs</a></li>
+    <li><a onclick="showPage('main'); scrollTo('contact')">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════════════════════════════════ PAGE PRINCIPALE ══ -->
+<div id="page-main" class="page active">
+
+  <!-- HERO -->
+  <section class="hero" id="accueil">
+    <div>
+      <div class="hero-eyebrow">Étudiant BUT GEA · 2ème Année sur 3</div>
+      <h1 class="hero-name">Futur<br><em>Chef de</em><br>Projet</h1>
+      <p class="hero-desc" data-key="hero-desc">Passionné par la gestion entrepreneuriale, le management d'activités et la communication — je construis les bases d'une carrière tournée vers la stratégie, le leadership et l'innovation organisationnelle.</p>
+      <span class="hero-cta" onclick="showPage('main'); scrollTo('qui-je-suis')">Découvrir mon profil &rarr;</span>
+    </div>
+    <div class="hero-visual">
+      <div class="avatar-frame">
+        <div class="avatar-bg"></div>
+        <div class="avatar-initials">
+          <span class="initials-big">GEA</span>
+          <span class="initials-sub">Gestion · Management</span>
+        </div>
+        <div class="frame-deco"></div>
+        <div class="avatar-badge">
+          <span class="badge-year">B2</span>
+          <span class="badge-sub">BUT<br>GEA</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUI JE SUIS -->
+  <section id="qui-je-suis">
+    <div class="reveal">
+      <div class="section-eyebrow">Qui je suis</div>
+      <h2 class="section-title">Étudiant en gestion,<br>orienté management</h2>
+      <p class="profile-text" data-key="profile-text">En 2ème année de BUT Gestion des Entreprises et des Administrations (sur 3 ans), je me spécialise dans la gestion entrepreneuriale et le management d'activités. Cette formation me donne une vision globale de l'entreprise — de sa dimension financière à sa dimension humaine — et me prépare à piloter des projets dans des environnements exigeants et en constante évolution.</p>
+      <div class="stats-row">
+        <div class="stat-box"><span class="stat-num">3</span><span class="stat-lbl">Ans de BUT</span></div>
+        <div class="stat-box"><span class="stat-num">GEMA</span><span class="stat-lbl">Spécialisation</span></div>
+        <div class="stat-box"><span class="stat-num">2026</span><span class="stat-lbl">Promotion</span></div>
+      </div>
+    </div>
+    <div class="reveal">
+      <p class="profile-quote" data-key="profile-quote">"La gestion, c'est l'art de transformer une vision en réalité, une équipe en moteur d'action."</p>
+      <div class="profile-details">
+        <div class="detail-row"><span class="detail-key">Formation</span><span class="detail-val" data-key="detail-formation">BUT Gestion des Entreprises et Administrations — spécialisation GEMA</span></div>
+        <div class="detail-row"><span class="detail-key">Établissement</span><span class="detail-val" data-key="detail-etab">IUT de — à compléter</span></div>
+        <div class="detail-row"><span class="detail-key">Orientation</span><span class="detail-val" data-key="detail-orient">Futur Chef de Projet en gestion et communication d'entreprise</span></div>
+        <div class="detail-row"><span class="detail-key">Atouts</span><span class="detail-val" data-key="detail-atouts">Sens de l'organisation, rigueur, capacité d'adaptation, travail en équipe, communication</span></div>
+        <div class="detail-row"><span class="detail-key">Langues</span><span class="detail-val" data-key="detail-langues">Français (natif) — Anglais (niveau à préciser)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPETENCES -->
+  <section id="competences">
+    <div class="reveal">
+      <div class="section-eyebrow">Compétences</div>
+      <h2 class="section-title">Les 5 compétences<br>du BUT GEA</h2>
+      <p class="comp-intro" data-key="comp-intro">Le BUT GEA est structuré autour de 5 grandes compétences transversales. Cliquez sur chaque domaine pour accéder à la page détaillée.</p>
+    </div>
+    <div class="comp-grid reveal">
+      <div class="comp-card comp-card-link" onclick="showPage('cp1')">
+        <div class="comp-num">01</div>
+        <h3 class="comp-title">Gérer</h3>
+        <p class="comp-desc">Situation d'Apprentissage et d'Évaluation (SAÉ) — mise en œuvre des compétences dans des contextes professionnels réels ou simulés.</p>
+        <div class="comp-line"></div>
+      </div>
+      <div class="comp-card comp-card-link" onclick="showPage('cp2')">
+        <div class="comp-num">02</div>
+        <h3 class="comp-title">Analyser</h3>
+        <p class="comp-desc">Analyse financière, comptabilité, contrôle de gestion et pilotage de la performance économique de l'organisation.</p>
+        <div class="comp-line"></div>
+      </div>
+      <div class="comp-card comp-card-link" onclick="showPage('cp3')">
+        <div class="comp-num">03</div>
+        <h3 class="comp-title">Piloter</h3>
+        <p class="comp-desc">Management des organisations, coordination des équipes, conduite du changement et développement de la stratégie.</p>
+        <div class="comp-line"></div>
+      </div>
+      <div class="comp-card comp-card-link" onclick="showPage('cp4')">
+        <div class="comp-num">04</div>
+        <h3 class="comp-title">Accompagner</h3>
+        <p class="comp-desc">Gestion des ressources humaines, droit du travail, recrutement, formation et développement des compétences.</p>
+        <div class="comp-line"></div>
+      </div>
+      <div class="comp-card comp-card-link" onclick="showPage('cp5')">
+        <div class="comp-num">05</div>
+        <h3 class="comp-title">Communiquer</h3>
+        <p class="comp-desc">Communication professionnelle, outils numériques, gestion de l'information et relation avec les parties prenantes.</p>
+        <div class="comp-line"></div>
+      </div>
+      <div class="comp-card" style="background:#F0EBE2; cursor:default;">
+        <div class="comp-num" style="color:rgba(201,168,76,0.25);">+</div>
+        <h3 class="comp-title" style="color:var(--warm-gray);">En construction</h3>
+        <p class="comp-desc">Pages détaillées à compléter en 3ème année avec vos projets, stages et travaux finaux.</p>
+        <div class="comp-line"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REALISATIONS -->
+  <section id="realisations">
+    <div class="reveal">
+      <div class="section-eyebrow">Ce que j'ai réalisé</div>
+      <h2 class="section-title">Projets &amp; Expériences</h2>
+      <p class="real-intro" data-key="real-intro">Aperçu des projets académiques, stages et travaux significatifs réalisés au cours de ma formation. Activez le mode édition pour personnaliser ou ajouter vos propres réalisations.</p>
+    </div>
+    <div class="real-grid reveal" id="real-grid">
+      <div class="real-card">
+        <button class="delete-card-btn" onclick="deleteCard(this)">&#x2715;</button>
+        <span class="real-tag" data-key="rt-1">Projet académique</span>
+        <h3 class="real-title" data-key="rh-1">Projet de création d'entreprise</h3>
+        <p class="real-desc" data-key="rd-1">Élaboration d'un business plan complet dans le cadre d'un projet tutoré : étude de marché, analyse concurrentielle, prévisionnel financier et présentation devant un jury. Travail en équipe de 4 personnes.</p>
+        <span class="real-period" data-key="rp-1">1ère année BUT GEA — 2024</span>
+      </div>
+      <div class="real-card">
+        <button class="delete-card-btn" onclick="deleteCard(this)">&#x2715;</button>
+        <span class="real-tag" data-key="rt-2">Stage professionnel</span>
+        <h3 class="real-title" data-key="rh-2">Stage en entreprise</h3>
+        <p class="real-desc" data-key="rd-2">Décrivez ici votre stage : secteur d'activité, missions réalisées, compétences mobilisées et principaux apports professionnels. Activez le mode édition pour personnaliser.</p>
+        <span class="real-period" data-key="rp-2">Durée et dates à compléter</span>
+      </div>
+      <div class="real-card">
+        <button class="delete-card-btn" onclick="deleteCard(this)">&#x2715;</button>
+        <span class="real-tag" data-key="rt-3">Mission transversale</span>
+        <h3 class="real-title" data-key="rh-3">Diagnostic stratégique sectoriel</h3>
+        <p class="real-desc" data-key="rd-3">Réalisation d'un diagnostic complet d'une organisation : analyse SWOT, PESTEL, identification des enjeux clés et formulation de préconisations stratégiques avec restitution orale structurée.</p>
+        <span class="real-period" data-key="rp-3">2ème année BUT GEA — 2025</span>
+      </div>
+      <div class="real-card">
+        <button class="delete-card-btn" onclick="deleteCard(this)">&#x2715;</button>
+        <span class="real-tag" data-key="rt-4">Engagement</span>
+        <h3 class="real-title" data-key="rh-4">Expérience associative ou personnelle</h3>
+        <p class="real-desc" data-key="rd-4">Décrivez ici un engagement associatif, un projet personnel, une activité bénévole ou toute autre expérience illustrant vos compétences en dehors du cadre académique.</p>
+        <span class="real-period" data-key="rp-4">À compléter</span>
+      </div>
+    </div>
+    <button class="add-project-btn" onclick="addProject()">+ Ajouter une réalisation</button>
+  </section>
+
+  <!-- OBJECTIFS -->
+  <section id="objectifs">
+    <div class="reveal"><div class="section-eyebrow" style="justify-content:center;">Trajectoire</div><h2 class="section-title">De la formation<br>au poste visé</h2></div>
+    <div class="traj-grid reveal">
+      <div class="traj-step"><div class="traj-dot"></div><span class="traj-year" data-key="ty1">2023 — 2026</span><h3 class="traj-title" data-key="tt1">BUT GEA — 3 ans</h3><p class="traj-desc" data-key="td1">Acquisition des fondamentaux de la gestion, du management et de la communication. Mise en pratique via les projets tutorés, études de cas et stages obligatoires.</p></div>
+      <div class="traj-step"><div class="traj-dot"></div><span class="traj-year" data-key="ty2">2026 — 2028</span><h3 class="traj-title" data-key="tt2">Poursuite d'études</h3><p class="traj-desc" data-key="td2">Licence professionnelle ou master spécialisé en management de projet, communication d'entreprise ou gestion des organisations, en formation initiale ou en alternance.</p></div>
+      <div class="traj-step"><div class="traj-dot"></div><span class="traj-year" data-key="ty3">À partir de 2028</span><h3 class="traj-title" data-key="tt3">Chef de Projet</h3><p class="traj-desc" data-key="td3">Pilotage de projets stratégiques alliant gestion opérationnelle et communication d'entreprise. Contribution active à la performance et au développement d'une organisation.</p></div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="reveal">
+      <div class="section-eyebrow">Contact</div>
+      <h2 class="section-title">Travaillons<br>ensemble</h2>
+      <p class="contact-intro" data-key="contact-intro">Disponible pour des opportunités de stage, des projets collaboratifs ou tout échange professionnel. N'hésitez pas à me contacter directement.</p>
+      <div>
+        <div class="contact-row"><span class="contact-key">Email</span><span class="contact-val" data-key="c-email">votre.email@exemple.fr</span></div>
+        <div class="contact-row"><span class="contact-key">Localisation</span><span class="contact-val" data-key="c-loc">France — Disponible en mobilité</span></div>
+        <div class="contact-row"><span class="contact-key">LinkedIn</span><span class="contact-val" data-key="c-linkedin">linkedin.com/in/votre-profil</span></div>
+        <div class="contact-row"><span class="contact-key">Disponibilité</span><span class="contact-val" data-key="c-dispo">Recherche de stage à partir de [date]</span></div>
+      </div>
+    </div>
+    <div class="reveal">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--cream);margin-bottom:1.5rem;">Envoyer un message</h3>
+      <div class="contact-form">
+        <div class="form-field"><label>Nom &amp; Prénom</label><input type="text" placeholder="Votre nom" /></div>
+        <div class="form-field"><label>Adresse email</label><input type="email" placeholder="email@exemple.fr" /></div>
+        <div class="form-field"><label>Objet</label><input type="text" placeholder="Stage, collaboration, opportunité..." /></div>
+        <div class="form-field"><label>Message</label><textarea rows="5" placeholder="Votre message..."></textarea></div>
+        <button class="form-submit" id="send-btn" onclick="sendMessage()">Envoyer &rarr;</button>
+      </div>
+    </div>
+  </section>
+
+  <footer><p>© 2026 — Portfolio <span>BUT GEA</span> · Gestion Entrepreneuriale &amp; Management d'Activités</p></footer>
+</div>
+
+<!-- ══════════════════════════════════════════ PAGE CP1 — GÉRER / SAÉ ══ -->
+<div id="page-cp1" class="page">
+  <div class="cp-hero" data-num="01">
+    <button class="cp-back" onclick="showPage('main'); scrollTo('competences')">← Retour aux compétences</button>
+    <div class="cp-eyebrow">Compétence 01 — BUT GEA</div>
+    <h1 class="cp-title"><em>Gérer</em><br>Situation d'Apprentissage</h1>
+  </div>
+  <div class="cp-body">
+    <div class="cp-grid">
+      <div>
+        <p class="cp-intro" data-key="cp1-intro">La compétence "Gérer" est au cœur du BUT GEA. Elle s'appuie sur les Situations d'Apprentissage et d'Évaluation (SAÉ) qui permettent de mobiliser l'ensemble des ressources acquises dans des contextes professionnels concrets. À compléter en 3ème année.</p>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp1-t1">Définition de la compétence</h3>
+          <p class="cp-block-text" data-key="cp1-d1">La SAÉ est une mise en situation professionnelle intégrant plusieurs ressources disciplinaires. Elle évalue la capacité à gérer un projet ou une problématique d'entreprise de manière autonome et méthodique. Contenu à compléter avec vos expériences concrètes.</p>
+        </div>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp1-t2">Apprentissages critiques</h3>
+          <p class="cp-block-text" data-key="cp1-d2">Identifier et analyser les ressources nécessaires. Mobiliser les méthodes et outils adaptés. Évaluer la pertinence des solutions apportées. Rendre compte des résultats de manière professionnelle. À enrichir avec vos apprentissages personnels.</p>
+        </div>
+        <div class="cp-todo">
+          <span class="cp-todo-label">À compléter en 3ème année</span>
+          <p class="cp-todo-text" data-key="cp1-todo">Décrivez ici les SAÉ réalisées, les compétences développées et les situations professionnelles rencontrées. Activez le mode édition pour modifier ce contenu.</p>
+        </div>
+      </div>
+      <div>
+        <div class="cp-skills-list">
+          <div class="cp-skill-item"><span class="cp-skill-name">Gestion de projet</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="70%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Analyse de situations</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="65%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Prise de décision</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="60%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Restitution orale</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="75%"></div></div></div>
+        </div>
+        <div class="cp-projects">
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp1-pt1">SAÉ — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp1-ph1">Titre du projet ou de la SAÉ</h4>
+            <p class="cp-project-desc" data-key="cp1-pd1">Description du projet réalisé, contexte, objectifs, méthode utilisée et résultats obtenus. À renseigner lors de la 3ème année.</p>
+          </div>
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp1-pt2">Stage — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp1-ph2">Expérience en entreprise</h4>
+            <p class="cp-project-desc" data-key="cp1-pd2">Description du stage ou de la mission professionnelle en lien avec cette compétence. Missions, apports, contexte d'entreprise. À renseigner.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><p>© 2026 — Portfolio <span>BUT GEA</span> · Compétence 01 — Gérer</p></footer>
+</div>
+
+<!-- ══════════════════════════════════════════ PAGE CP2 — ANALYSER ══ -->
+<div id="page-cp2" class="page">
+  <div class="cp-hero" data-num="02">
+    <button class="cp-back" onclick="showPage('main'); scrollTo('competences')">← Retour aux compétences</button>
+    <div class="cp-eyebrow">Compétence 02 — BUT GEA</div>
+    <h1 class="cp-title"><em>Analyser</em><br>Finances &amp; Gestion</h1>
+  </div>
+  <div class="cp-body">
+    <div class="cp-grid">
+      <div>
+        <p class="cp-intro" data-key="cp2-intro">La compétence "Analyser" recouvre l'analyse financière, la comptabilité générale, le contrôle de gestion et le pilotage de la performance économique. Elle constitue le socle technique du gestionnaire. À compléter en 3ème année avec vos travaux et expériences.</p>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp2-t1">Analyse financière</h3>
+          <p class="cp-block-text" data-key="cp2-d1">Lecture et interprétation des états financiers (bilan, compte de résultat, tableau de flux). Calcul et analyse des ratios financiers. Diagnostic de la situation économique et financière d'une organisation. Contenu à enrichir avec vos apprentissages.</p>
+        </div>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp2-t2">Comptabilité &amp; Contrôle de gestion</h3>
+          <p class="cp-block-text" data-key="cp2-d2">Comptabilité générale et analytique, calcul des coûts, élaboration de budgets prévisionnels, tableaux de bord et indicateurs de performance. Maîtrise des outils de pilotage économique. À compléter avec vos travaux pratiques.</p>
+        </div>
+        <div class="cp-todo">
+          <span class="cp-todo-label">À compléter en 3ème année</span>
+          <p class="cp-todo-text" data-key="cp2-todo">Indiquez ici les travaux réalisés, les outils maîtrisés (Excel, logiciels comptables), les analyses effectuées et les enseignements tirés. Activez le mode édition pour modifier.</p>
+        </div>
+      </div>
+      <div>
+        <div class="cp-skills-list">
+          <div class="cp-skill-item"><span class="cp-skill-name">Comptabilité générale</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="72%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Analyse financière</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="65%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Contrôle de gestion</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="60%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Tableaux de bord</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="68%"></div></div></div>
+        </div>
+        <div class="cp-projects">
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp2-pt1">Travaux pratiques — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp2-ph1">Analyse financière d'une entreprise</h4>
+            <p class="cp-project-desc" data-key="cp2-pd1">Description de l'exercice ou du cas pratique réalisé. Entreprise étudiée, méthodes utilisées, conclusions formulées. À renseigner en 3ème année.</p>
+          </div>
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp2-pt2">Projet — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp2-ph2">Élaboration d'un budget prévisionnel</h4>
+            <p class="cp-project-desc" data-key="cp2-pd2">Contexte du projet, hypothèses retenues, construction du budget, analyse des écarts. À compléter avec vos travaux réels.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><p>© 2026 — Portfolio <span>BUT GEA</span> · Compétence 02 — Analyser</p></footer>
+</div>
+
+<!-- ══════════════════════════════════════════ PAGE CP3 — PILOTER ══ -->
+<div id="page-cp3" class="page">
+  <div class="cp-hero" data-num="03">
+    <button class="cp-back" onclick="showPage('main'); scrollTo('competences')">← Retour aux compétences</button>
+    <div class="cp-eyebrow">Compétence 03 — BUT GEA</div>
+    <h1 class="cp-title"><em>Piloter</em><br>Management des Organisations</h1>
+  </div>
+  <div class="cp-body">
+    <div class="cp-grid">
+      <div>
+        <p class="cp-intro" data-key="cp3-intro">La compétence "Piloter" englobe le management des organisations, la coordination des équipes, la conduite du changement et la dimension stratégique de l'entreprise. C'est la compétence centrale de la spécialisation GEMA. À enrichir de vos expériences en 3ème année.</p>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp3-t1">Management &amp; Leadership</h3>
+          <p class="cp-block-text" data-key="cp3-d1">Théories du management, styles de leadership, animation d'équipes et coordination des activités. Gestion des conflits, motivation des collaborateurs et développement d'une culture organisationnelle positive. À développer avec vos apprentissages pratiques.</p>
+        </div>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp3-t2">Stratégie d'entreprise</h3>
+          <p class="cp-block-text" data-key="cp3-d2">Diagnostic stratégique (SWOT, PESTEL, forces de Porter), formulation de la stratégie, déclinaison opérationnelle et pilotage de la performance. Conduite du changement et gestion de projets de transformation. Contenu à enrichir.</p>
+        </div>
+        <div class="cp-todo">
+          <span class="cp-todo-label">À compléter en 3ème année</span>
+          <p class="cp-todo-text" data-key="cp3-todo">Décrivez les projets de management réalisés, les équipes coordonnées, les diagnostics stratégiques effectués. Activez le mode édition pour modifier ce contenu.</p>
+        </div>
+      </div>
+      <div>
+        <div class="cp-skills-list">
+          <div class="cp-skill-item"><span class="cp-skill-name">Management d'équipes</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="68%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Analyse stratégique</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="74%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Conduite de projet</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="70%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Prise de décision</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="65%"></div></div></div>
+        </div>
+        <div class="cp-projects">
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp3-pt1">Diagnostic — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp3-ph1">Diagnostic stratégique d'entreprise</h4>
+            <p class="cp-project-desc" data-key="cp3-pd1">Entreprise ou secteur analysé, outils mobilisés, recommandations formulées et présentation des résultats. À compléter en 3ème année.</p>
+          </div>
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp3-pt2">Management — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp3-ph2">Projet de management d'équipe</h4>
+            <p class="cp-project-desc" data-key="cp3-pd2">Contexte, composition de l'équipe, rôle assumé, méthodes de coordination et résultats obtenus. À renseigner avec vos expériences concrètes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><p>© 2026 — Portfolio <span>BUT GEA</span> · Compétence 03 — Piloter</p></footer>
+</div>
+
+<!-- ══════════════════════════════════════════ PAGE CP4 — ACCOMPAGNER ══ -->
+<div id="page-cp4" class="page">
+  <div class="cp-hero" data-num="04">
+    <button class="cp-back" onclick="showPage('main'); scrollTo('competences')">← Retour aux compétences</button>
+    <div class="cp-eyebrow">Compétence 04 — BUT GEA</div>
+    <h1 class="cp-title"><em>Accompagner</em><br>Ressources Humaines</h1>
+  </div>
+  <div class="cp-body">
+    <div class="cp-grid">
+      <div>
+        <p class="cp-intro" data-key="cp4-intro">La compétence "Accompagner" porte sur la gestion des ressources humaines : recrutement, formation, développement des compétences, droit du travail et relations sociales. Elle prépare à gérer la dimension humaine de l'organisation. À compléter en 3ème année.</p>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp4-t1">Gestion des Ressources Humaines</h3>
+          <p class="cp-block-text" data-key="cp4-d1">Processus de recrutement, intégration des collaborateurs, gestion des carrières, évaluation des performances et gestion de la formation. Construction d'une politique RH cohérente avec les objectifs stratégiques de l'entreprise. Contenu à enrichir.</p>
+        </div>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp4-t2">Droit du travail &amp; Relations sociales</h3>
+          <p class="cp-block-text" data-key="cp4-d2">Contrats de travail, droit disciplinaire, représentation du personnel, négociation collective. Respect des obligations légales et gestion des relations sociales au sein de l'entreprise. À développer avec vos apprentissages pratiques.</p>
+        </div>
+        <div class="cp-todo">
+          <span class="cp-todo-label">À compléter en 3ème année</span>
+          <p class="cp-todo-text" data-key="cp4-todo">Décrivez les missions RH réalisées, les procédures maîtrisées, les situations de GRH traitées. Activez le mode édition pour renseigner vos expériences.</p>
+        </div>
+      </div>
+      <div>
+        <div class="cp-skills-list">
+          <div class="cp-skill-item"><span class="cp-skill-name">Recrutement</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="62%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Droit du travail</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="58%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Formation & GPEC</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="55%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Relations sociales</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="60%"></div></div></div>
+        </div>
+        <div class="cp-projects">
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp4-pt1">RH — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp4-ph1">Simulation de recrutement</h4>
+            <p class="cp-project-desc" data-key="cp4-pd1">Description du processus simulé ou réel : définition du poste, sélection des candidats, entretiens et décision. Compétences mobilisées. À renseigner.</p>
+          </div>
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp4-pt2">Droit — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp4-ph2">Cas pratique droit social</h4>
+            <p class="cp-project-desc" data-key="cp4-pd2">Présentation d'un cas de droit du travail traité, analyse juridique réalisée, solution proposée et enseignements tirés. À compléter avec vos travaux.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><p>© 2026 — Portfolio <span>BUT GEA</span> · Compétence 04 — Accompagner</p></footer>
+</div>
+
+<!-- ══════════════════════════════════════════ PAGE CP5 — COMMUNIQUER ══ -->
+<div id="page-cp5" class="page">
+  <div class="cp-hero" data-num="05">
+    <button class="cp-back" onclick="showPage('main'); scrollTo('competences')">← Retour aux compétences</button>
+    <div class="cp-eyebrow">Compétence 05 — BUT GEA</div>
+    <h1 class="cp-title"><em>Communiquer</em><br>Communication &amp; Numérique</h1>
+  </div>
+  <div class="cp-body">
+    <div class="cp-grid">
+      <div>
+        <p class="cp-intro" data-key="cp5-intro">La compétence "Communiquer" couvre la communication professionnelle écrite et orale, la maîtrise des outils numériques et la gestion de l'information. Elle est transversale à toutes les situations professionnelles. À développer et illustrer en 3ème année.</p>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp5-t1">Communication professionnelle</h3>
+          <p class="cp-block-text" data-key="cp5-d1">Rédaction de documents professionnels (rapports, notes de synthèse, comptes rendus), présentations orales structurées, argumentation et négociation. Communication adaptée aux différentes parties prenantes de l'entreprise. À enrichir de vos productions.</p>
+        </div>
+        <div class="cp-block">
+          <h3 class="cp-block-title" data-key="cp5-t2">Outils numériques &amp; Information</h3>
+          <p class="cp-block-text" data-key="cp5-d2">Maîtrise de la suite Office (Excel, Word, PowerPoint), outils collaboratifs, gestion documentaire, veille informationnelle et communication digitale. Capacité à exploiter les données pour produire des livrables professionnels de qualité. À compléter.</p>
+        </div>
+        <div class="cp-todo">
+          <span class="cp-todo-label">À compléter en 3ème année</span>
+          <p class="cp-todo-text" data-key="cp5-todo">Listez ici les supports produits, les présentations réalisées, les outils numériques maîtrisés et les situations de communication professionnelle vécues. Activez le mode édition pour modifier.</p>
+        </div>
+      </div>
+      <div>
+        <div class="cp-skills-list">
+          <div class="cp-skill-item"><span class="cp-skill-name">Communication écrite</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="80%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Présentation orale</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="75%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Suite Office</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="78%"></div></div></div>
+          <div class="cp-skill-item"><span class="cp-skill-name">Communication digitale</span><div class="cp-skill-bar-wrap"><div class="cp-skill-bar" style="width:0%" data-width="65%"></div></div></div>
+        </div>
+        <div class="cp-projects">
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp5-pt1">Production — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp5-ph1">Rapport ou note de synthèse</h4>
+            <p class="cp-project-desc" data-key="cp5-pd1">Décrivez ici un document professionnel réalisé : contexte, objectif, structure adoptée, destinataire et retours obtenus. À renseigner avec vos productions réelles.</p>
+          </div>
+          <div class="cp-project-card">
+            <span class="cp-project-tag" data-key="cp5-pt2">Présentation — À compléter</span>
+            <h4 class="cp-project-title" data-key="cp5-ph2">Soutenance ou présentation orale</h4>
+            <p class="cp-project-desc" data-key="cp5-pd2">Contexte de la prise de parole, sujet traité, public visé, support utilisé et bilan de la prestation. À compléter avec vos expériences en 3ème année.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer><p>© 2026 — Portfolio <span>BUT GEA</span> · Compétence 05 — Communiquer</p></footer>
+</div>
+
+<script>
+// ══ NAVIGATION ENTRE PAGES ══
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (id !== 'main') animateBars();
+}
+
+function scrollTo(id) {
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 60);
+}
+
+function animateBars() {
+  setTimeout(() => {
+    document.querySelectorAll('.cp-skill-bar').forEach(bar => {
+      bar.style.width = bar.dataset.width;
+    });
+  }, 400);
+}
+
+// ══ SCROLL REVEAL ══
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+// ══ NAV ACTIVE LINK ══
+const allSections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links > li > a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  allSections.forEach(sec => { if (window.scrollY >= sec.offsetTop - 130) current = sec.id; });
+  navLinks.forEach(a => {
+    a.classList.remove('active');
+    const href = a.getAttribute('href');
+    if (href && href.includes(current)) a.classList.add('active');
+  });
+});
+
+// ══ SAUVEGARDE AUTOMATIQUE (localStorage) ══
+const STORAGE_KEY = 'portfolio_gea_data';
+
+function saveAll() {
+  const data = {};
+  document.querySelectorAll('[data-key]').forEach(el => {
+    data[el.dataset.key] = el.innerHTML;
+  });
+  // Save extra cards
+  const cards = [];
+  document.querySelectorAll('#real-grid .real-card').forEach((card, i) => {
+    cards.push(card.outerHTML);
+  });
+  data['__extra_cards'] = JSON.stringify(cards);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadAll() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  const data = JSON.parse(raw);
+  document.querySelectorAll('[data-key]').forEach(el => {
+    if (data[el.dataset.key] !== undefined) {
+      el.innerHTML = data[el.dataset.key];
+    }
+  });
+}
+
+// Auto-save on any input in contenteditable
+document.addEventListener('input', (e) => {
+  if (e.target.getAttribute('contenteditable') === 'true') {
+    clearTimeout(window._saveTimer);
+    window._saveTimer = setTimeout(saveAll, 600);
+  }
+});
+
+// ══ MODE ÉDITION ══
+let editMode = false;
+
+function toggleEdit() {
+  editMode = !editMode;
+  const btn = document.getElementById('edit-toggle');
+  const hint = document.getElementById('edit-hint');
+  const editables = document.querySelectorAll('[data-key]');
+
+  if (editMode) {
+    document.body.classList.add('edit-mode');
+    btn.classList.add('active');
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Terminer l'édition`;
+    hint.classList.add('visible');
+    editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+  } else {
+    document.body.classList.remove('edit-mode');
+    btn.classList.remove('active');
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Modifier le site`;
+    hint.classList.remove('visible');
+    editables.forEach(el => el.setAttribute('contenteditable', 'false'));
+    saveAll();
+  }
+}
+
+// ══ ADD / DELETE PROJECT ══
+let cardCount = 10;
+function addProject() {
+  cardCount++;
+  const grid = document.getElementById('real-grid');
+  const card = document.createElement('div');
+  card.className = 'real-card';
+  const k = 'extra-' + cardCount;
+  card.innerHTML = `
+    <button class="delete-card-btn" onclick="deleteCard(this)">&#x2715;</button>
+    <span class="real-tag" data-key="${k}-tag" contenteditable="true">Catégorie</span>
+    <h3 class="real-title" data-key="${k}-title" contenteditable="true">Titre de la réalisation</h3>
+    <p class="real-desc" data-key="${k}-desc" contenteditable="true">Décrivez ici votre projet, expérience ou réalisation.</p>
+    <span class="real-period" data-key="${k}-period" contenteditable="true">Période — Année</span>
+  `;
+  grid.appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => card.querySelector('.real-title').focus(), 300);
+  saveAll();
+}
+
+function deleteCard(btn) {
+  if (confirm('Supprimer cette réalisation ?')) {
+    btn.closest('.real-card').remove();
+    saveAll();
+  }
+}
+
+// ══ SEND MESSAGE ══
+function sendMessage() {
+  const btn = document.getElementById('send-btn');
+  btn.textContent = 'Message envoyé';
+  btn.style.background = '#2D5A3D';
+  btn.style.color = 'white';
+  setTimeout(() => { btn.innerHTML = 'Envoyer &rarr;'; btn.style.background = ''; btn.style.color = ''; }, 3000);
+}
+
+// ══ INIT ══
+loadAll();
+</script>
+</body>
+</html>
